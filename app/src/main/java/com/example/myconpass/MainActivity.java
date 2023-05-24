@@ -1,0 +1,108 @@
+package com.example.myconpass;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.Bundle;
+import android.view.View;
+
+class CompassView extends View  {
+    float azimath = 0;
+    float pitch = 0;
+    float roll = 0;
+
+    public void setAzimath(float azimath) {
+        this.azimath = azimath;
+    }
+
+    public void setPitch(float pitch) {
+        this.pitch = pitch;
+    }
+
+    public void setRoll(float roll) {
+        this.roll = roll;
+    }
+
+    public CompassView(Context context) {
+        super(context);
+    }
+
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+
+        Paint paint =new Paint(Paint.ANTI_ALIAS_FLAG);
+        canvas.save();
+
+        paint.setColor(Color.BLACK);
+        paint.setTextSize(50f);
+
+        canvas.drawText("방향센서 값",100,600,paint);
+        canvas.drawText("방위각" + azimath,100,675,paint);
+        canvas.drawText("피치" + pitch,100,750,paint);
+        canvas.drawText("롤" + roll,100,825 ,paint);
+
+        paint.setColor(Color.MAGENTA);
+        canvas.rotate(-azimath,250,250);
+        canvas.drawCircle(250,250,200,paint);
+
+        paint.setColor(Color.BLACK);
+        canvas.drawText("N",235,80,paint);
+        canvas.drawText("S",235,460,paint);
+        canvas.drawRect(240,80,260,460,paint);
+
+        canvas.restore();
+    }
+}
+public class MainActivity extends AppCompatActivity implements SensorEventListener {
+
+    CompassView compass;
+    SensorManager sm;
+    Sensor oriantation;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        compass = new CompassView(this);
+        setContentView(compass);
+
+        sm = (SensorManager) getSystemService(SENSOR_SERVICE);
+        oriantation = sm.getDefaultSensor(Sensor.TYPE_ORIENTATION);
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        sm.registerListener(this,oriantation,SensorManager.SENSOR_DELAY_UI);
+
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        sm.unregisterListener(this);
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent sensorEvent) {
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_ORIENTATION){
+            compass.setAzimath(sensorEvent.values[0]);
+            compass.setPitch(sensorEvent.values[1]);
+            compass.setRoll(sensorEvent.values[2]);
+            compass.invalidate();
+        }
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int i) {
+
+    }
+}
